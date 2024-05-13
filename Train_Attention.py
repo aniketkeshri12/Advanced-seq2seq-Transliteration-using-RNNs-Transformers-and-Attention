@@ -56,8 +56,8 @@ parser.add_argument('-dpd', '--data_path_directory', help="Dataset", type=str, d
 parser.add_argument("-bd", "--bidirection",type=bool,default=False, choices=[True, False],help="enter correct value of bidirection")
 parser.add_argument('-ct', '--cell_type', help='choices: ["LSTM", "GRU", "RNN"]', choices=["LSTM", "GRU", "RNN"], type=str, default='LSTM')
 parser.add_argument("-hls", "--hidden_layer_size", default=512, type=int, choices=[64,128 , 256,512])
-parser.add_argument("-ndl", "--num_decoder_layer", default=2,type=int, choices=[1,2])
-parser.add_argument("-nel", "--num_encoder_layer", default=2,type=int, choices=[1,2])
+parser.add_argument("-ndl", "--num_decoder_layer", default=2,type=int, choices=[1,2,3])
+parser.add_argument("-nel", "--num_encoder_layer", default=2,type=int, choices=[1,2,3])
 parser.add_argument("-es", "--embedding_size", type=int, default=256 , choices=[64,128,256])
 
 
@@ -847,9 +847,9 @@ def build(config):
     input_size_encoder=28
 
     dec_dropout = config.dropout
-    num_encoder_layers = config.num_encoder_layer
+    num_encoder_layers = 2
     learning_rate = config.learning_rate
-    num_decoder_layers = config.num_encoder_layer
+    num_decoder_layers = 2
     output_vocab_size=55
     enc_dropout = config.dropout
     bidirection = config.bidirection
