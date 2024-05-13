@@ -27,7 +27,7 @@ For the hyper parameter optimisation stage i ran it in without model and with at
 Once the best configuration is identified with the help of wandb using Random search or Bayesian optimisation, the full training dataset is used to train the best model configuration and the test accuracy is calculated. 
 
 ### Language i choosed : 
-  HINDI DATASET
+- HINDI DATASET
 
 ### Recurrent neural network (RNN) 
 It is a deep learning model that is trained to process and convert a sequential data input into a specific sequential data output. Sequential data is data—such as words, sentences, or time-series data—where sequential components interrelate based on complex semantics and syntax rules. An RNN is a software system that consists of many interconnected components mimicking how humans perform sequential data conversions, such as translating text from one language to another. RNNs are largely being replaced by transformer-based artificial intelligence (AI) and large language models (LLM), which are much more efficient in sequential data processing.
@@ -107,9 +107,9 @@ Training part is done selecting one of the languages among all provider in datas
 
   
 ### How to run 'Train_Vanilla.py" file. 
-**SELECT HINDI DATASET
+- **SELECT HINDI DATASET
 
-    python Train_Vanilla.py -dpd /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin -ep 1 -ct LSTM -ndl 3 -nel 3 
+      python Train_Vanilla.py -dpd /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin -ep 1 -ct LSTM -ndl 3 -nel 3 
      
 where ,  /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin  is a data path for "Hindi" language 
 
@@ -194,9 +194,9 @@ Training part is done selecting one of the languages among all provider in datas
 
   
 ### How to run 'Train_Attention.py" file.
-**SELECT HINDI DATASET
+- **SELECT HINDI DATASET
 
-    python Train_Attention.py -dpd /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin -ep 1 -ct LSTM -ndl 3 -nel 3 
+      python Train_Attention.py -dpd /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin -ep 1 -ct LSTM -ndl 3 -nel 3 
      
 where ,  /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin  is a data path for hindi language 
 
