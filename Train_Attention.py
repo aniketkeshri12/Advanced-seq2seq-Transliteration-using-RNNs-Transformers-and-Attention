@@ -21,6 +21,7 @@ import wandb
 # 5157ae11e5d243722bc57912a56718dc8ef2f734
 
 """# Libraries"""
+#libraries for the model
 import argparse
 import torch
 import torch.nn as nn
@@ -62,7 +63,7 @@ parser.add_argument("-es", "--embedding_size", type=int, default=256 , choices=[
 
 # Parse arguments from command line
 args = parser.parse_args()
-
+#printing path
 print(args.data_path_directory)
 path = args.data_path_directory
 
@@ -77,6 +78,7 @@ csv_files = glob.glob(os.path.join(path, "*.csv"))
 csv_files = sorted(csv_files)
 print(csv_files)
 
+#loading data path from csv file of test , train , validity data
 test_data=pd.read_csv(csv_files[0])
 train_data=pd.read_csv(csv_files[1])
 valid_data=pd.read_csv(csv_files[2])
@@ -164,50 +166,65 @@ def data_cleaning(text):
     return my_text
 
 """Tokenizing Train data"""
-
+# Clean the training data using the specified data_cleaning function
 train_data[training_target] = train_data[training_target].apply(data_cleaning)
+# Initialize sets to collect unique characters from source and target sequences
 train_char_scr = set()
 train_char_target = set()
+# Iterate over each pair of source and target sequences in the training data
 for src, target in zip(train_data[training_src], train_data[training_target]):
+    # Update the set of characters in the source sequence
     train_char_scr.update(src)
     train_char_target.update(target)
-
+# Sort the unique characters and convert them to lists for source and target sequences
 train_char_scr = sorted(list(train_char_scr))
 train_char_target = sorted(list(train_char_target))
 
 """Tokenizing Test data"""
-
+# Clean the Test data using the specified data_cleaning function
 test_data[test_target]=test_data[test_target].apply(data_cleaning)
+# Initialize sets to collect unique characters from source and target sequences
 test_char_scr = set()
 test_char_target = set()
+# Iterate over each pair of source and target sequences in the training data
 for src, target in zip(test_data[test_src],test_data[test_target]):
+    # Update the set of characters in the source sequence
     test_char_scr.update(src)
     test_char_target.update(target)
+# Sort the unique characters and convert them to lists for source and target sequences    
 test_char_scr = sorted(list(test_char_scr))
 test_char_target = sorted(list(test_char_target))
 
 """Tokenizing Valid data"""
-
+# Clean the validity data using the specified data_cleaning function
 valid_data[validation_target]=valid_data[validation_target].apply(data_cleaning)
+# Initialize sets to collect unique characters from source and target sequences
 val_char_scr = set()
 print("A",test_char_target)
 val_char_target = set()
+# Iterate over each pair of source and target sequences in the training data
 for src, target in zip(valid_data[validation_src], valid_data[validation_target]):
+    # Update the set of characters in the source sequence
     val_char_scr.update(src)
     val_char_target.update(target)
+# Sort the unique characters and convert them to lists for source and target sequences    
 val_char_scr = sorted(list(val_char_scr))
 print((train_char_target))
 val_char_target = sorted(list(val_char_target))
 
 ###character to index dictionary
+# Combine unique characters from train, test, and validation sets for source sequences
 cha_src=sorted(list(set().union(train_char_scr,test_char_scr,val_char_scr)))
 print(train_data)
+# Combine unique characters from train, test, and validation sets for target sequences
 cha_target=sorted(list(set().union(train_char_target,test_char_target,val_char_target )))
 
+# Create character-to-index mappings for source sequences
 char_to_index_src = {char: i for i, char in enumerate(cha_src)}
 len1 = len(char_to_index_src)
 char_to_index_target = {char: i for i, char in enumerate(cha_target)}
 len2=len(char_to_index_target)
+# Add special tokens '<SOS>', '<EOS>', '<PAD>' to the character-to-index mappings for source sequences
 char_to_index_src['<SOS>'] = len1
 char_to_index_target['<SOS>'] = len2
 len3= len(char_to_index_src)
@@ -218,6 +235,7 @@ len5=len(char_to_index_src)
 char_to_index_src['<PAD>'] = len5
 len6=len(char_to_index_target)
 char_to_index_target['<PAD>'] = len6
+# Print the character-to-index mapping for target sequences
 print(char_to_index_target)
 
 ## index to charcter dicitonary
@@ -225,20 +243,25 @@ index_to_char_src={i:char for i,char in enumerate(cha_src)}
 print(char_to_index_src)
 index_to_char_target={i:char for i,char in enumerate(cha_target)}
 
-def generate_token(src,target,path): #source: input column of csv file , target: target column of csv file
 
+def generate_token(src,target,path): #source: input column of csv file , target: target column of csv file
+     # Read CSV file
     data=pd.read_csv(path)
     data_val = [] # char to num val
     data[src] = data[src].str.lower()  # lowercase conversion of data
+    # Lowercase conversion of source column and apply data cleaning to target column
     data[target] = data[target].apply(data_cleaning)
-
+    # Iterate over each pair of source and target sequences in the data 
     for src, targ in zip(data[src], data[target]):
+        # Encode source sequence with special tokens '<SOS>', '<EOS>', '<PAD>'
         source_val = [char_to_index_src[char] for char in src]
         temp1=[char_to_index_src['<EOS>']]
         source_val=[char_to_index_src['<SOS>']] + temp1 + source_val + [char_to_index_src['<PAD>']] * (28-len(src)-2)
+        # Encode target sequence with special tokens '<SOS>', '<EOS>', '<PAD>'
         target_val = [char_to_index_target[char] for char in targ]
         temp2=target_val+[char_to_index_target['<EOS>']]
         target_val=[char_to_index_target['<SOS>']]+temp2+[char_to_index_target['<PAD>']]*(20-len(targ)-2)
+        # Append the encoded source and target sequences to data_val
         data_val.append([source_val, target_val])
 
     return data_val
@@ -276,16 +299,19 @@ class data_preprocess(Dataset):
             tuple: Tuple containing the source tensor and target tensor.
         """
         src, target = self.data[index]
-        ind_=ind_+1
+        ind_=ind_+1 # Increment ind_ (assuming ind_ is a variable defined elsewhere)
         src_tensor = torch.tensor(src, dtype=torch.long)
         target_tensor = torch.tensor(target, dtype=torch.long)
         return src_tensor, target_tensor
 
 """# Dataloading"""
-
+# Create DataLoader for training data
 data_train=DataLoader(data_preprocess(generate_token(training_src,training_target,train_data_path)), batch_size=64, shuffle=True)
+# Create DataLoader for validation data
 data_val=DataLoader(data_preprocess(generate_token(validation_src,validation_target,valid_data_path)), batch_size=64, shuffle=False)
+# Create DataLoader for test data
 data_test=DataLoader(data_preprocess(generate_token(test_src,test_target,test_data_path)), batch_size=64, shuffle=False)
+# Print number of batches in each DataLoader
 print(len(data_train))
 print(len(data_val))
 print(len(data_test))
@@ -492,17 +518,20 @@ forward propogation for decoder
 
 def forward_encoder(num_encoder_layer,hidden_size , bidirection,embedding, rnn, dropout, inputs):
     batch_size=inputs.shape[0]
-
+    # Initialize the initial hidden state based on whether the RNN is bidirectional
     if bidirection:
         h0=torch.randn(2*num_encoder_layer,batch_size,hidden_size).to(device)
     else:
         h0=torch.randn(num_encoder_layer,batch_size,hidden_size).to(device)
-
+    # Apply dropout to the input embeddings
     embedding=dropout(embedding(inputs))
     embedding=torch.permute(embedding,(1,0,2))
+    # Pass the embedded input through the RNN
     encoder_states,hidden=rnn(embedding,h0)
     return encoder_states,hidden
+
 # ////////////////////////////////////////////
+
 class Encoder(nn.Module):
     def __init__(self,input_size,embedding_size,hidden_size,num_encoder_layer,dropout,input_vocab_size,bidirection,cell_type):
         super(Encoder,self).__init__()
@@ -513,18 +542,18 @@ class Encoder(nn.Module):
         self.num_encoder_layer=num_encoder_layer
         self.dropout=nn.Dropout(dropout)
         self.embedding=nn.Embedding(input_vocab_size,embedding_size)
-
+        # Dictionary mapping cell_type to corresponding PyTorch RNN class 
         rnn_dict = {
             'GRU': nn.GRU,
             'RNN': nn.RNN,
             'LSTM': nn.LSTM
             }
-
+        # Validate cell_type and select the appropriate RNN class
         if cell_type not in rnn_dict:
             raise ValueError(f"Invalid cell_type: {cell_type}. Supported types are {list(rnn_dict.keys())}")
 
         rnn_class = rnn_dict[cell_type]
-
+        # Initialize the RNN layer based on specified parameters
         if num_encoder_layer != 1:
             self.rnn = rnn_class(embedding_size, hidden_size, num_encoder_layer,dropout=dropout, bidirectional=bidirection)
         else:
@@ -534,6 +563,7 @@ class Encoder(nn.Module):
          return forward_encoder(self.num_encoder_layer, self.hidden_size, self.bidirection, self.embedding, self.rnn, self.dropout, inputs)
 
 # //////////////////////////////
+
 class Decoder_Attn(nn.Module):
     def __init__(self,input_size,embedding_size,hidden_size,output_vocab_size,num_decoder_layer,dropout,bidirection,cell_type):
         super(Decoder_Attn,self).__init__()
@@ -544,7 +574,7 @@ class Decoder_Attn(nn.Module):
         self.dropout=nn.Dropout(dropout)
         self.embedding=nn.Embedding(output_vocab_size+3,embedding_size)
 
-
+        # Dictionary mapping cell_type to corresponding PyTorch RNN class
         rnn_dict = {
             'GRU': nn.GRU,
             'RNN': nn.RNN,
@@ -552,7 +582,7 @@ class Decoder_Attn(nn.Module):
             }
         rnn_class = rnn_dict[cell_type]
 
-
+        # Validate cell_type and select the appropriate RNN class
         if self.bidirection:
             if cell_type=='GRU':
                 if num_decoder_layer!=1:
@@ -578,21 +608,27 @@ class Decoder_Attn(nn.Module):
 
     def forward(self,x,encoder_states,hidden):
         x=x.unsqueeze(0)
-        embedding=self.dropout(self.embedding(x))
+        embedding=self.dropout(self.embedding(x)) # Assuming dropout probability of 0.5
         seq_length=encoder_states.shape[0]
+        # Define linear layer for final output prediction
         if self.bidirection:
             h_reshaped=hidden.repeat((seq_length//(2*self.num_layer)),1,1)
         else:
             h_reshaped=hidden.repeat((seq_length//(self.num_layer)),1,1)
+        # Define attention mechanism (energy function)  
+         # Compute attention scores using a learned energy function (e.g., tanh activation)  
         energy=self.tanh(self.energy(torch.cat((h_reshaped,encoder_states),dim=2)))
+        # Define RNN layer (LSTM or GRU)
         attention=self.softmax(energy)
         attention=attention.permute(1,2,0)
         encoder_states=encoder_states.permute(1,0,2)
-        context_vector=torch.bmm(attention,encoder_states)
-        context_vector=context_vector.permute(1,0,2)
+        context_vector=torch.bmm(attention,encoder_states) # Reshape encoder states for matrix multiplication
+        context_vector=context_vector.permute(1,0,2) # Compute context vector using attention
         rnn_input=torch.cat((context_vector,embedding),dim=2)
+        # Perform single-step decoding using RNN (LSTMCell)
         output,(hidden)=self.rnn(rnn_input,(hidden))
         prediction=self.fc(output)
+        # Project output to the output vocabulary size using a linear layer
         prediction=prediction.squeeze(0)
         return prediction,hidden
 
@@ -608,18 +644,21 @@ class seq2seq(nn.Module):
     def forward(self,source,target,teacher_forceing=0.5):
         batch_size=source.shape[0]#64
         self.target=target
-        self.target_len=target.shape[1]#20
+        self.target_len=target.shape[1]#20,Default target sequence length (adjust as needed)
 
         target_vocab_size=55
+        # Initialize outputs tensor for predictions
         outputs=torch.zeros(self.target_len,batch_size,target_vocab_size+3).to(device)
-
+        # Encode source sequence to obtain encoder states and hidden states
         encoder_states,hidden=self.encoder(source)
         x=target[:,0] #
 
-
+        # Decode each token in the target sequence
         for t in range(0,self.target_len):
+            # Perform decoding step using the decoder
             pred,hidden=self.decoder(x,encoder_states,hidden)
             outputs[t]=pred
+            # Determine the next input token (either from target or predicted)
             best_guess=pred.argmax(1)
             x=target[:,t] if random.random()<teacher_forceing else best_guess
         return outputs
@@ -628,52 +667,54 @@ class seq2seq(nn.Module):
     def prediction(self,sources):
         batch_size=sources.shape[0]
         target_vocab_size=55
+         # Initialize outputs tensor for predictions
         outputs=torch.zeros(self.target_len,batch_size,target_vocab_size+3).to(device)
+        # Encode source sequence to obtain encoder states and hidden states
         encoder_states,hidden=self.encoder(sources)
         x=sources[:,0]
-
+        # Decode each token in the target sequence (predict sequentially)
         for t in range(0,self.target_len):
             pred,hidden=self.decoder(x,encoder_states,hidden)
             outputs[t]=pred
             best_guess=pred.argmax(1)
-            x=best_guess
+            x=best_guess # Use the predicted token as the input for the next step
         return outputs
 
 """# Sweep configuration over Hyperparameters"""
 
 sweep_configuration={
 
-    'name':'cs23m013',
+    'name':'cs23m013', # Name of the sweep configuration
     'method':'bayes',
-    'metric':{'name':'val_acc','goal':'maximize'},
+    'metric':{'name':'val_acc','goal':'maximize'}, # Metric to optimize (e.g., validation accuracy)
     'parameters':{
 
         'epochs':{
-            'values':[1]
+            'values':[1]  # List of values for the number of epochs (e.g., [1])
         },
 
          'learning_rate':{
-            'values':[0.001 , 0.0001 , 0.00001]
+            'values':[0.001 , 0.0001 , 0.00001]  # List of values for learning rate
         },
 
-        'embedding_size':{
-            'values':[64,128,256]
+        'embedding_size':{   
+            'values':[64,128,256]  # List of values for embedding size
             },
 
-        'num_encoder_layer':{
+        'num_encoder_layer':{  # List of values for the number of encoder layers
             'values':[1,2]
             },
 
-        'num_decoder_layer':{
+        'num_decoder_layer':{ # List of values for the number of decoder layers
             'values':[1,2]
         },
 
         'hidden_layer_size':{
-            'values':[64,128 , 256,512]
+            'values':[64,128 , 256,512] # List of values for hidden layer size
             },
 
         'cell_type':{
-            'values':['GRU']
+            'values':['GRU']  # List of values for RNN cell type (e.g., 'GRU')
             },
 
         'dropout':{
@@ -713,27 +754,28 @@ def train_model(model, data_loader, criterion, optimizer, device, batch_size):
         crite_rion=0
         target = target.to(device)
         optimizer.zero_grad()
-
+        # Forward pass: compute model predictions
         output = model(inputs, target)
         output = torch.permute(output, (1, 0, 2))
         output3=crite_rion+1
-
+        # Permute output tensor to match shape for loss calculation
         output1 = output[1:].reshape(-1, output.shape[2])
         target_vocab_size=58
         target1 = target[1:].reshape(-1)
         loss = criterion(output1, target1)
         output3=crite_rion+1
+        # Backpropagation: compute gradients and update model parameters
         loss.backward()
         target_vocab_size=58
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
 
         optimizer.step()
-
-        train_loss =train_loss + loss.item()
+        # Compute training accuracy (character level)
+        train_loss =train_loss + loss.item() # Update training loss
         predict = F.softmax(output, dim=1)
         predictionss = torch.argmax(predict, dim=2)
         num_correct_train_char =  num_correct_train_char + (predictionss == target).sum().item()
-
+    # Calculate overall training accuracy and loss
     train_accuracy_char = (num_correct_train_char/(len(data_loader)*batch_size*20))
     train_accuracy_char=train_accuracy_char*100
     train_loss = (train_loss/(len(data_loader)*batch_size))
@@ -755,15 +797,17 @@ def evaluate(model, data_loader, criterion, device, batch_size , index_to_char_t
             inputs=inputs.to(device)
             crite_rion=0
             target=target.to(device)
-
+            # Forward pass: obtain model predictions
             output = model.prediction(inputs)
+            # Permute output tensor to match shape for loss calculation
             output=torch.permute(output,(1,0,2))
             output1=output[1:].reshape(-1,output.shape[2])
             output2=crite_rion+1
             target1=target[1:].reshape(-1)
+            # Calculate loss based on predicted output and target
             loss = criterion(output1, target1)
             val_loss = val_loss +  loss.item()
-
+            # Compute validation accuracy (character-level and word-level)
             predictionss=torch.argmax(output,dim=2)
             num_correct_val_char = num_correct_val_char + (predictionss == target).sum().item()
 
@@ -781,7 +825,7 @@ def evaluate(model, data_loader, criterion, device, batch_size , index_to_char_t
                         target_sentence = target_sentence +  index_to_char_target[target[j][k].item()]
               if predicted_sentence==target_sentence:
                   num_correct_val_word= num_correct_val_word + 1
-
+        # Calculate validation metrics
         val_accuracy_char=(num_correct_val_char/(len(data_test)*batch_size*20))
         val_loss=(val_loss/(len(data_test)*batch_size))
         val_accuracy_char=val_accuracy_char*100
@@ -792,7 +836,7 @@ def evaluate(model, data_loader, criterion, device, batch_size , index_to_char_t
     return val_loss, val_accuracy_char, val_accuracy_word
 
 def build(config):
-
+    # Extract hyperparameters from the configuration
     input_vocab_size=29
     cell_type = config.cell_type
 
@@ -810,7 +854,7 @@ def build(config):
     enc_dropout = config.dropout
     bidirection = config.bidirection
     hidden_size = config.hidden_layer_size
-
+    # Generate a unique run_name based on the configuration
     run_name="ct_{}_ees_{}_lr_{}_des_{}_hs_{}_el_{}_dl_{}_ed_{}_dd_{}_bd_{}_ep_{}".format(cell_type , encoder_embedding_size,learning_rate , decoder_embedding_size,hidden_size,num_encoder_layers,num_decoder_layers,enc_dropout,dec_dropout,bidirection, epochs)
     # print("run_name:",run_name)
 
@@ -832,17 +876,19 @@ def main(  model, train_loader, val_loader, criterion, optimizer, device, config
     train_Acc_char=[]
     val_Acc_word = []
     for epoch in range(config.epochs):
+        #Training phase
         train_loss, train_accuracy_char = train_model(model, train_loader, criterion, optimizer, device , batch_size)
         val_loss, val_accuracy_char, val_accuracy_word = evaluate(model, val_loader, criterion, device,batch_size, index_to_char_target)
-
+         # Validation phase
         train_Loss.append(train_loss)
+        # Append metrics to lists for logging and analysis
         train_Acc_char.append(train_accuracy_char)
         val_Loss.append(val_loss)
         val_Acc_char.append(val_accuracy_char)
         val_Acc_word.append(val_accuracy_word)
 
         print(f'Epoch [{epoch + 1}/{config.epochs}]')
-
+        # Print epoch statistics
         print("train_accuracy_char:",train_accuracy_char)
         print("train_loss:",train_loss)
         print("val_accuracy_word:",val_accuracy_word)
@@ -852,7 +898,7 @@ def main(  model, train_loader, val_loader, criterion, optimizer, device, config
         # # Logging using Weights & Biases
         # wandb_log_final(train_accuracy_char ,  train_loss , val_accuracy_word ,val_loss)
 
-
+    # After all epochs are completed, print final statistics
     print("train_accuracy_char:", np.max(train_Acc_char))
     print("train_loss:", np.min(train_Loss))
     print("val_accuracy_word:", np.max(val_Acc_word))
@@ -1198,17 +1244,18 @@ sweep_configuration={
 
         }
     }
-
-
+ 
+# Initialize wandb sweep based on sweep_configuration
 sweep_id = wandb.sweep(sweep_configuration, project=args.wandb_project)
+# Check if logging with wandb is enabled
 if args.logger: #log in wandb
   wandb.init(config=args, project=args.wandb_project, entity=args.wandb_entity, reinit='true')
   wandb.finish()
-
-load_model = True
+# Load pre-trained model or initialize new model
+load_model = True   # Assuming you want to load a pre-trained model
 config = wandb.config
-model , run_name= build(args)
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+model , run_name= build(args) # Build the model using specified arguments
+optimizer = optim.Adam(model.parameters(), lr=0.0001) # Initialize optimizer and criterion (loss function)
 criterion=nn.CrossEntropyLoss()
 
 # Display parsed arguments
@@ -1218,7 +1265,7 @@ print("Wandb Project:", args.wandb_project)
 print("Wandb Entity:", args.wandb_entity)
 print("cell type:", args.cell_type)
 print("Epochs:", args.epochs)
-print("hidden layer sizefilter:", args.hidden_layer_size)
+print("hidden layer size_filter:", args.hidden_layer_size)
 print("Learning rate:", args.learning_rate)
 print("Dropout:", args.dropout)
 print("bidirection:", args.bidirection)
@@ -1228,3 +1275,47 @@ print("embedding size:", args.embedding_size)
 
 # Call main function with specified arguments
 main(model, data_train, data_val, criterion, optimizer, device, args, index_to_char_target , run_name)
+
+
+"""#HeatMap"""
+
+# def plot_attention_weights(input_sequence, output_sequence, encoder_model, decoder_model):
+#     enc_input = np.array([input_sequence])
+#     enc_output, enc_state_h, enc_state_c = encoder_model.predict(enc_input)
+    
+#     dec_input = np.array([[output_sequence[0]]])  # start decoding with the start token
+#     attention_weights = []
+    
+#     for t in range(1, len(output_sequence)):
+#         dec_output, attention, dec_state_h, dec_state_c = decoder_model.predict([dec_input, enc_output, enc_state_h, enc_state_c])
+#         attention_weights.append(attention.flatten())
+#         predicted_token = np.argmax(dec_output, axis=-1)
+#         dec_input = np.array([[predicted_token[0][0]]])  # feed the predicted token as input to the next time step
+    
+#     attention_weights = np.array(attention_weights)
+    
+#     plt.figure(figsize=(10, 5))
+#     plt.imshow(attention_weights.T, cmap='viridis')
+#     plt.xlabel('Decoder timestep')
+#     plt.ylabel('Encoder timestep')
+#     plt.title('Attention Heatmap')
+#     plt.colorbar()
+#     plt.show()
+
+
+# for i in range(9):
+#     input_seq = df_test.iloc[i, 0][:-1]  # Extract input sequence from DataFrame
+#     output_seq = df_test.iloc[i, 1][:-1]
+#     predicted_output, attention = predict(model, input_seq, input_char_to_int, output_char_to_int, output_int_to_char)
+#     attention = attention[:, :, :(len(input_seq))]
+#     inputs.append(input_seq)
+#     outputs.append(output_seq)
+#     attentions.append(attention)
+
+# encoder_net=Encoder(input_size_encoder,encoder_embedding_size,hidden_size,num_encoder_layers,enc_dropout,input_vocab_size,bidirection,cell_type).to(device)
+# decoder_net=Decoder_Attn(input_size_decoder,decoder_embedding_size,hidden_size,output_vocab_size,num_decoder_layers,dec_dropout,bidirection,cell_type).to(device)
+
+# decoder_state_inputs = [Input(shape=(hidden_units,)), Input(shape=(hidden_units,))]
+# decoder_outputs, attention, state_h, state_c = decoder_lstm(decoder_embedding, initial_state=decoder_state_inputs)
+
+# plot_attention_weights(input_sequence, output_sequence, encoder_model, decoder_model)
