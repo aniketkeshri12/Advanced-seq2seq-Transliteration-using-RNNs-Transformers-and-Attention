@@ -107,7 +107,7 @@ Training part is done selecting one of the languages among all provider in datas
 
   
 ### How to run 'Train_Vanilla.py" file. 
-- **SELECT HINDI DATASET
+- ** SELECT HINDI DATASET
 
       python Train_Vanilla.py -dpd /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin -ep 1 -ct LSTM -ndl 3 -nel 3 
      
@@ -194,7 +194,7 @@ Training part is done selecting one of the languages among all provider in datas
 
   
 ### How to run 'Train_Attention.py" file.
-- **SELECT HINDI DATASET
+- ** SELECT HINDI DATASET
 
       python Train_Attention.py -dpd /content/drive/MyDrive/DL/A3_DATA/aksharantar_sampled/hin -ep 1 -ct LSTM -ndl 3 -nel 3 
      
