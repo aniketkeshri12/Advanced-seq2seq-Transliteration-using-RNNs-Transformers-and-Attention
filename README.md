@@ -38,6 +38,10 @@ It is a deep learning model that is trained to process and convert a sequential 
 - clasas decoder : processing Decoder part of the model
 - class seq2seq : connecting encoder and decoder to generate the output
 
+### cell Type used :
+ - LSTM 
+ - GRU
+ - RNN
 
 # Vanilla Model (Without Attention)  
 Here I , built a RNN model without using the attention mechanish , i ran this total of 127 runs and recoderd the accuracy in wandb.
