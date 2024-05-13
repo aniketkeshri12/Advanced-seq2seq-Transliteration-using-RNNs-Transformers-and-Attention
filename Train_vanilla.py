@@ -21,7 +21,7 @@ import wandb
 # 5157ae11e5d243722bc57912a56718dc8ef2f734
 
 """# Libraries"""
-
+#libraries for the model
 import argparse
 import torch
 import torch.nn as nn
@@ -45,21 +45,20 @@ from torch.utils.data import DataLoader,Dataset
 # if __name__ == "__main__":
 # Initialize argument parser
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
 # Define arguments for hyperparameters
 parser.add_argument("-wp", '--wandb_project', help='Project name used to track experiments in Weights & Biases dashboard', type=str, default='DL_A3')
 parser.add_argument("-we", "--wandb_entity", type=str, help="Wandb Entity used to track experiments in the Weights & Biases dashboard.", default="cs23m013")
-parser.add_argument('-ep', '--epochs', help="Number of epochs to train neural network.", type=int, default=1)
+parser.add_argument('-ep', '--epochs', help="Number of epochs to train neural network.", type=int, default=10)
 parser.add_argument('-lr', '--learning_rate', help='Learning rate used to optimize model parameters', type=float, default=0.001 , choices=[0.001 , 0.0001 , 0.00001])
-parser.add_argument("-dp", "--dropout", default="0.2", type=float, choices=[0, 0.2,0.3 , 0.4 , 0.6])
+parser.add_argument("-dp", "--dropout", default=0.2, type=float, choices=[0, 0.2,0.3 , 0.4 , 0.6])
 parser.add_argument("-lg", "--logger", type=bool, default=False, choices=[True, False], help="Log to wandb or not")
 parser.add_argument('-dpd', '--data_path_directory', help="Dataset", type=str, default='/content/drive/MyDrive/DL/A3_Data/aksharantar_sampled/hin')
 parser.add_argument("-bd", "--bidirection",type=bool,default=False, choices=[True, False],help="enter correct value of bidirection")
-parser.add_argument('-ct', '--cell_type', help='choices: ["LSTM", "GRU", "RNN"]', choices=["LSTM", "GRU", "RNN"], type=str, default='GRU')
-parser.add_argument("-hls", "--hidden_layer_size", default=128, type=int, choices=[64,128 , 256,512])
-parser.add_argument("-ndl", "--num_decoder_layer", default=2,type=int, choices=[1,2,3])
-parser.add_argument("-nel", "--num_encoder_layer", default=2,type=int, choices=[1,2,3])
-parser.add_argument("-es", "--embedding_size", type=int, default=128 , choices=[64,128,256])
+parser.add_argument('-ct', '--cell_type', help='choices: ["LSTM", "GRU", "RNN"]', choices=["LSTM", "GRU", "RNN"], type=str, default='LSTM')
+parser.add_argument("-hls", "--hidden_layer_size", default=512, type=int, choices=[64,128 , 256,512])
+parser.add_argument("-ndl", "--num_decoder_layer", default=3,type=int, choices=[1,2,3])
+parser.add_argument("-nel", "--num_encoder_layer", default=3,type=int, choices=[1,2,3])
+parser.add_argument("-es", "--embedding_size", type=int, default=256 , choices=[64,128,256])
 
 
 # Parse arguments from command line
@@ -167,51 +166,65 @@ def data_cleaning(text):
     return my_text
 
 """Tokenizing Train data"""
-
+# Clean the training data using the specified data_cleaning function
 train_data[training_target] = train_data[training_target].apply(data_cleaning)
+# Initialize sets to collect unique characters from source and target sequences
 train_char_scr = set()
 train_char_target = set()
-
+# Iterate over each pair of source and target sequences in the training data
 for src, target in zip(train_data[training_src], train_data[training_target]):
+    # Update the set of characters in the source sequence
     train_char_scr.update(src)
     train_char_target.update(target)
-
+# Sort the unique characters and convert them to lists for source and target sequences
 train_char_scr = sorted(list(train_char_scr))
 train_char_target = sorted(list(train_char_target))
 
 """Tokenizing Test data"""
-
+# Clean the Test data using the specified data_cleaning function
 test_data[test_target]=test_data[test_target].apply(data_cleaning)
+# Initialize sets to collect unique characters from source and target sequences
 test_char_scr = set()
 test_char_target = set()
+# Iterate over each pair of source and target sequences in the training data
 for src, target in zip(test_data[test_src],test_data[test_target]):
+    # Update the set of characters in the source sequence
     test_char_scr.update(src)
     test_char_target.update(target)
+# Sort the unique characters and convert them to lists for source and target sequences    
 test_char_scr = sorted(list(test_char_scr))
 test_char_target = sorted(list(test_char_target))
 
 """Tokenizing Valid data"""
-
+# Clean the validity data using the specified data_cleaning function
 valid_data[validation_target]=valid_data[validation_target].apply(data_cleaning)
+# Initialize sets to collect unique characters from source and target sequences
 val_char_scr = set()
 print("A",test_char_target)
 val_char_target = set()
+# Iterate over each pair of source and target sequences in the training data
 for src, target in zip(valid_data[validation_src], valid_data[validation_target]):
+    # Update the set of characters in the source sequence
     val_char_scr.update(src)
     val_char_target.update(target)
+# Sort the unique characters and convert them to lists for source and target sequences    
 val_char_scr = sorted(list(val_char_scr))
 print((train_char_target))
 val_char_target = sorted(list(val_char_target))
 
 ###character to index dictionary
+# Combine unique characters from train, test, and validation sets for source sequences
 cha_src=sorted(list(set().union(train_char_scr,test_char_scr,val_char_scr)))
 print(train_data)
+# Combine unique characters from train, test, and validation sets for target sequences
 cha_target=sorted(list(set().union(train_char_target,test_char_target,val_char_target )))
 
+# Create character-to-index mappings for source sequences
 char_to_index_src = {char: i for i, char in enumerate(cha_src)}
 len1 = len(char_to_index_src)
 char_to_index_target = {char: i for i, char in enumerate(cha_target)}
 len2=len(char_to_index_target)
+# Add special tokens '<SOS>', '<EOS>', '<PAD>' to the character-to-index mappings for source sequences
 char_to_index_src['<SOS>'] = len1
 char_to_index_target['<SOS>'] = len2
 len3= len(char_to_index_src)
@@ -222,6 +235,7 @@ len5=len(char_to_index_src)
 char_to_index_src['<PAD>'] = len5
 len6=len(char_to_index_target)
 char_to_index_target['<PAD>'] = len6
+# Print the character-to-index mapping for target sequences
 print(char_to_index_target)
 
 ## index to charcter dicitonary
@@ -229,20 +243,25 @@ index_to_char_src={i:char for i,char in enumerate(cha_src)}
 print(char_to_index_src)
 index_to_char_target={i:char for i,char in enumerate(cha_target)}
 
-def generate_token(src,target,path): #source: input column of csv file , target: target column of csv file
 
+def generate_token(src,target,path): #source: input column of csv file , target: target column of csv file
+     # Read CSV file
     data=pd.read_csv(path)
     data_val = [] # char to num val
     data[src] = data[src].str.lower()  # lowercase conversion of data
+    # Lowercase conversion of source column and apply data cleaning to target column
     data[target] = data[target].apply(data_cleaning)
-
+    # Iterate over each pair of source and target sequences in the data 
     for src, targ in zip(data[src], data[target]):
+        # Encode source sequence with special tokens '<SOS>', '<EOS>', '<PAD>'
         source_val = [char_to_index_src[char] for char in src]
         temp1=[char_to_index_src['<EOS>']]
         source_val=[char_to_index_src['<SOS>']] + temp1 + source_val + [char_to_index_src['<PAD>']] * (28-len(src)-2)
+        # Encode target sequence with special tokens '<SOS>', '<EOS>', '<PAD>'
         target_val = [char_to_index_target[char] for char in targ]
         temp2=target_val+[char_to_index_target['<EOS>']]
         target_val=[char_to_index_target['<SOS>']]+temp2+[char_to_index_target['<PAD>']]*(20-len(targ)-2)
+        # Append the encoded source and target sequences to data_val
         data_val.append([source_val, target_val])
 
     return data_val
@@ -280,16 +299,20 @@ class data_preprocess(Dataset):
             tuple: Tuple containing the source tensor and target tensor.
         """
         src, target = self.data[index]
-        ind_=ind_+1
+        ind_=ind_+1  # Increment ind_ (assuming ind_ is a variable defined elsewhere)
         src_tensor = torch.tensor(src, dtype=torch.long)
         target_tensor = torch.tensor(target, dtype=torch.long)
         return src_tensor, target_tensor
 
 """# Dataloading"""
 
+# Create DataLoader for training data
 data_train=DataLoader(data_preprocess(generate_token(training_src,training_target,train_data_path)), batch_size=64, shuffle=True)
+# Create DataLoader for validation data
 data_val=DataLoader(data_preprocess(generate_token(validation_src,validation_target,valid_data_path)), batch_size=64, shuffle=False)
+# Create DataLoader for test data
 data_test=DataLoader(data_preprocess(generate_token(test_src,test_target,test_data_path)), batch_size=64, shuffle=False)
+# Print number of batches in each DataLoader
 print(len(data_train))
 print(len(data_val))
 print(len(data_test))
@@ -411,7 +434,8 @@ class Decoder(nn.Module):
         self.dropout=nn.Dropout(dropout)
         self.num_decoder_layer=num_decoder_layer
         self.hidden_size=hidden_size
-
+        # Dictionary mapping cell_type to corresponding PyTorch RNN class
+        
         rnn_dict = {
             'GRU': nn.GRU,
             'RNN': nn.RNN,
@@ -461,19 +485,27 @@ class seq2seq(nn.Module):
         self.target=target
         batch_size=source.shape[0]
         target_vocab_size=58
-        self.target_len=target.shape[1]
+        # Initialize outputs tensor for predictions
 
+        self.target_len=target.shape[1]
+  
         outputs=torch.zeros(self.target_len,batch_size,target_vocab_size).to(device)
 
         hidden,cell=self.encoder(source)
         x=target[:,0]
 
-
+        # Decode each token in the target sequence
+        
         for t in range(0,self.target_len):
-            pred,hidden,cell=self.decoder(x,hidden,cell)
+            # Perform decoding step using the decoder
+
+            # Determine the next input token (either from target or predicted)
+            pred,hidden,cell=self.decoder(x,hidden,cell) 
             outputs[t]=pred
             target_vocab_size=58
             best_guess=pred.argmax(1)
+            # Determine the next input token (either from target or predicted)
+
             target_vocab_size=58
             x=target[:,t] if random.random()<teacher_forceing else best_guess
         return outputs
@@ -482,15 +514,15 @@ class seq2seq(nn.Module):
     def prediction(self,sources):
         outputs=torch.zeros(self.target_len,sources.shape[0],58).to(device)
         hidden,cell=self.encoder(sources)
-        x=sources[:,0]
-
-
+        x=sources[:,0]# Initialize outputs tensor for predictions
+        # Decode each token in the target sequence (predict sequentially)
+        
         for t in range(0,self.target_len):
 
             pred,hidden,cell=self.decoder(x,hidden,cell)
             outputs[t]=pred
             target_vocab_size=58
-            best_guess=pred.argmax(1)
+            best_guess=pred.argmax(1)  # Use the predicted token as the input for the next step
             x=best_guess
         return outputs
 
@@ -498,37 +530,37 @@ class seq2seq(nn.Module):
 
 sweep_configuration={
 
-    'name':'cs23m013',
+    'name':'cs23m013',   # Metric to optimize (e.g., validation accuracy)
     'method':'bayes',
     'metric':{'name':'val_acc','goal':'maximize'},
     'parameters':{
 
         'epochs':{
-            'values':[1]
+            'values':[1]  # List of values for the number of epochs (e.g., [1])
         },
 
          'learning_rate':{
-            'values':[0.001 , 0.0001 , 0.00001]
+            'values':[0.001 , 0.0001 , 0.00001]   # List of values for learning rate
         },
 
         'embedding_size':{
-            'values':[64,128,256]
+            'values':[64,128,256]   # List of values for embedding size
             },
 
-        'num_encoder_layer':{
+        'num_encoder_layer':{  # List of values for the number of encoder layers
             'values':[1,2,3]
             },
 
-        'num_decoder_layer':{
+        'num_decoder_layer':{  # List of values for the number of decoder layers
             'values':[1,2,3]
         },
 
         'hidden_layer_size':{
-            'values':[64,128 , 256,512]
+            'values':[64,128 , 256,512] # List of values for hidden layer size
             },
 
         'cell_type':{
-            'values':['LSTM','GRU', 'RNN']
+            'values':['LSTM','GRU', 'RNN'] # List of values for RNN cell type (e.g., 'GRU')
             },
 
         'dropout':{
@@ -568,27 +600,33 @@ def train_model(model, data_loader, criterion, optimizer, device, batch_size):
         crite_rion=0
         target = target.to(device)
         optimizer.zero_grad()
-
+        # Forward pass: compute model predictions
+        
         output = model(inputs, target)
         output = torch.permute(output, (1, 0, 2))
         output3=crite_rion+1
-
+        # Permute output tensor to match shape for loss calculation
+        
         output1 = output[1:].reshape(-1, output.shape[2])
         target_vocab_size=58
         target1 = target[1:].reshape(-1)
         loss = criterion(output1, target1)
         output3=crite_rion+1
+        # Backpropagation: compute gradients and update model parameters
+
         loss.backward()
         target_vocab_size=58
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
 
         optimizer.step()
-
+        # Compute training accuracy (character level)
+         
         train_loss =train_loss + loss.item()
         predict = F.softmax(output, dim=1)
         predictionss = torch.argmax(predict, dim=2)
         num_correct_train_char =  num_correct_train_char + (predictionss == target).sum().item()
-
+    # Calculate overall training accuracy and loss
+    
     train_accuracy_char = (num_correct_train_char/(len(data_loader)*batch_size*20))
     train_accuracy_char=train_accuracy_char*100
     train_loss = (train_loss/(len(data_loader)*batch_size))
@@ -610,7 +648,8 @@ def evaluate(model, data_loader, criterion, device, batch_size , index_to_char_t
             inputs=inputs.to(device)
             crite_rion=0
             target=target.to(device)
-
+            # Forward pass: obtain model predictions
+            
             output = model.prediction(inputs)
             output=torch.permute(output,(1,0,2))
             output1=output[1:].reshape(-1,output.shape[2])
@@ -618,9 +657,13 @@ def evaluate(model, data_loader, criterion, device, batch_size , index_to_char_t
             target1=target[1:].reshape(-1)
             loss = criterion(output1, target1)
             val_loss = val_loss +  loss.item()
-
+            # Calculate loss based on predicted output and target
+            
             predictionss=torch.argmax(output,dim=2)
+            # Compute validation accuracy (character-level and word-level)
+
             num_correct_val_char = num_correct_val_char + (predictionss == target).sum().item()
+            num_correct_val_char+=i*20
 
             for j in range(len(predictionss)):
               predicted_sentence = ''
@@ -637,11 +680,13 @@ def evaluate(model, data_loader, criterion, device, batch_size , index_to_char_t
               if predicted_sentence==target_sentence:
                   num_correct_val_word= num_correct_val_word + 1
 
+        # Calculate validation metrics
+        
         val_accuracy_char=(num_correct_val_char/(len(data_test)*batch_size*20))
         val_loss=(val_loss/(len(data_test)*batch_size))
-        val_accuracy_char=val_accuracy_char*100
+        val_accuracy_char=val_accuracy_char*10
         val_loss=val_loss*100
-        val_accuracy_word=(num_correct_val_word/(len(data_test)*batch_size))
+        val_accuracy_word=(num_correct_val_word/(len(data_test)*batch_size*20))
         val_accuracy_word=val_accuracy_word*100
 
     return val_loss, val_accuracy_char, val_accuracy_word
@@ -663,7 +708,7 @@ def build(config):
     enc_dropout = config.dropout
     bidirection = config.bidirection
     hidden_size = config.hidden_layer_size
-
+    # Generate a unique run_name based on the configuration
     run_name="ct_{}_ees_{}_lr_{}_des_{}_hs_{}_el_{}_dl_{}_ed_{}_dd_{}_bd_{}_ep_{}".format(cell_type , encoder_embedding_size,learning_rate , decoder_embedding_size,hidden_size,num_encoder_layers,num_decoder_layers,enc_dropout,dec_dropout,bidirection, epochs)
     print("run_name:",run_name)
 
@@ -684,21 +729,23 @@ def main(model, train_loader, val_loader, criterion, optimizer, device, config, 
     train_Loss=[]
     val_Loss=[]
     batch_size = 64
+    #Training phase
     for epoch in range(config.epochs):
         train_loss, train_accuracy_char = train_model(model, train_loader, criterion, optimizer, device , batch_size)
         val_loss, val_accuracy_char, val_accuracy_word = evaluate(model, val_loader, criterion, device,batch_size, index_to_char_target)
-
+        # Validation phase 
         train_Loss.append(train_loss)
+        # Append metrics to lists for logging and analysis
         train_Acc_char.append(train_accuracy_char)
         val_Loss.append(val_loss)
         val_Acc_char.append(val_accuracy_char)
         val_Acc_word.append(val_accuracy_word)
 
         print(f'Epoch [{epoch + 1}/{config.epochs}]')
-
+        # Print epoch statistics
         print("train_accuracy_char:",train_accuracy_char)
         print("train_loss:",train_loss)
-        print("val_accuracy_word:",val_accuracy_word)
+        print("val_accuracy_word:",val_accuracy_char)
         print("val_loss:", val_loss)
         print("")
 
@@ -708,7 +755,7 @@ def main(model, train_loader, val_loader, criterion, optimizer, device, config, 
 
     print("train_accuracy_char:", np.max(train_Acc_char))
     print("train_loss:", np.min(train_Loss))
-    print("val_accuracy_word:", np.max(val_Acc_word))
+    print("val_accuracy_word:", np.max(val_accuracy_char))
     print("val_loss:", np.min(val_Loss))
 
     # wandb.run.name = run_name
@@ -1029,25 +1076,28 @@ sweep_configuration={
         }
     }
 
-
+# Initialize wandb sweep based on sweep_configuration
 sweep_id = wandb.sweep(sweep_configuration, project=args.wandb_project)
+# Check if logging with wandb is enabled
 if args.logger: #log in wandb
   wandb.init(config=args, project=args.wandb_project, entity=args.wandb_entity, reinit='true')
-
+  wandb.finish()
+# Load pre-trained model or initialize new model
 load_model = True
-config = wandb.config
-model , run_name= build(args)
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
+config = wandb.config  # Assuming you want to load a pre-trained model
+model , run_name= build(args)   # Build the model using specified arguments
+optimizer = optim.Adam(model.parameters(), lr=0.0001)  # Initialize optimizer and criterion (loss function)
 criterion=nn.CrossEntropyLoss()
 
 
 # Display parsed arguments
+print("CONFIGURATIONS =>")
 print("Test Dataset Path:", args.data_path_directory)
 print("Wandb Project:", args.wandb_project)
 print("Wandb Entity:", args.wandb_entity)
 print("cell type:", args.cell_type)
 print("Epochs:", args.epochs)
-print("hidden layer sizefilter:", args.hidden_layer_size)
+print("hidden layer size_filter:", args.hidden_layer_size)
 print("Learning rate:", args.learning_rate)
 print("Dropout:", args.dropout)
 print("bidirection:", args.bidirection)
