@@ -1,4 +1,4 @@
-# Advancedseq2seqTransliterationusingRNNs,TransformersandAttention
+# Advanced seq2seq Transliteration using RNNs, Transformers and Attention
 
 # Deep Learning Assignment 3: RNN
 
